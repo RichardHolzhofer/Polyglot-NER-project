@@ -5,3 +5,5 @@ data/
 models/
 xlm-roberta-ner-hun_eng_ger
 xlm-roberta-ner-hun_ger
+/models
+/data
