@@ -1,0 +1,28 @@
+# BACKEND DOCKERFILE
+
+FROM python:3.12-slim
+
+# Install uv for fast dependency management
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Set working directory
+WORKDIR /app
+
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
+
+# Copy project files
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies without the current package (only libs + api group)
+RUN uv sync --frozen --no-dev --no-install-project --group api
+
+# Copy only relevant application source
+COPY app.py ./
+COPY src/ ./src/
+
+# Expose FastAPI port
+EXPOSE 8000
+
+# Run the FastAPI application
+CMD ["uv", "run", "python", "app.py"]

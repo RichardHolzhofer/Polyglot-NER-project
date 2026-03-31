@@ -29,7 +29,7 @@ def main():
         parser.add_argument("--batch_size", type=int, help="Training batch size")
         parser.add_argument("--lr", type=float, help="Learning rate")
         parser.add_argument("--run_name", type=str, help="W&B run name")
-        
+
         args = parser.parse_args()
 
         # Initialize Configuration
@@ -39,7 +39,8 @@ def main():
         if args.epochs: config.num_train_epochs = args.epochs
         if args.batch_size: config.per_device_train_batch_size = args.batch_size
         if args.lr: config.learning_rate = args.lr
-        if args.run_name: config.hub_repo_id = f"rchrdhlzhfr-personal/{args.run_name}"
+        if args.run_name: 
+            config.output_model_name = args.run_name
 
         logging.info("--- Starting Polyglot NER Training Pipeline ---")
         
@@ -62,8 +63,13 @@ def main():
         # Initialize and Run Trainer
         trainer = PolyglotTrainer(config, data_loader)
         
-        # Handles the dataset loading, trainer setup, and W&B logging
-        trainer.train(run_name=args.run_name)
+        # Load and set up evaluation datasets
+        dn = data_loader.load_datasets()
+        eval_ds = data_loader.get_eval_datasets(dn)
+        
+        # Passing the full dictionary of evaluation datasets to maintain
+        # per-language validation metrics during training.
+        trainer.train(eval_dataset=eval_ds, run_name=args.run_name)
 
         logging.info("--- Training Pipeline Completed Successfully ---")
 

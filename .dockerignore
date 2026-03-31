@@ -1,0 +1,46 @@
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+.hypothesis/
+.pytest_cache/
+
+# Training artifacts
+logs/
+wandb/
+models/
+artifacts/
+temp/
+
+# Data artifacts
+data/raw/
+data/processed/
+
+# IDE and Project
+.vscode/
+.idea/
+.git/
+.gitignore
+.env
+.dvc/
+*.dvc
+
+# Docker
+Dockerfile*
+docker-compose.yml
+
+# Notebooks
+*.ipynb

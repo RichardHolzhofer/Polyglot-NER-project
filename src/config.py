@@ -29,8 +29,8 @@ class NERConfig:
 
     # Processed Data Paths
     processed_path: str = "processed/gold_only_processed"
-    hun_processed_path: str = "processed/processed_dataset/hun_processed"
-    ger_processed_path: str = "processed/processed_dataset/ger_processed"
+    hun_processed_path: str = "processed/hun_processed"
+    ger_processed_path: str = "processed/ger_processed"
     
     # Training hyperparameters
     learning_rate: float = 1e-5
@@ -47,8 +47,10 @@ class NERConfig:
     ])
     
     # Output config
-    output_dir: str = "models/xlm-roberta-ner-hun_ger_prod"
-    hub_repo_id: str = "rchrdhlzhfr-personal/hun_ger_training_prod"
+    training_dir: str = "model_checkpoints/"
+    output_dir: str = "final_model"
+    output_model_name:str = "xlm-roberta-ner-hun-ger"
+    hub_repo_id: str = field(default_factory=lambda: os.getenv("HUB_REPO_ID"))
 
     # Master features
     master_dataset: str = "hun"

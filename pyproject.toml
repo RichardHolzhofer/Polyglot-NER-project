@@ -1,29 +1,40 @@
 [project]
 name = "polyglot-ner-project"
 version = "0.1.0"
-description = "Add your description here"
+description = "A multilingual Named Entity Recognition project for Hungarian and German."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "accelerate>=1.13.0",
-    "dagshub>=0.6.9",
-    "datasets>=4.8.3",
-    "dvc[s3]>=3.67.0",
-    "evaluate>=0.4.6",
-    "fastapi>=0.135.2",
-    "ipykernel>=7.2.0",
-    "ipywidgets>=8.1.8",
     "python-dotenv>=1.2.2",
+    "requests>=2.32.5",
+]
+
+[dependency-groups]
+api = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "torch>=2.4.0",
+    "transformers>=4.44.0",
+    "evaluate>=0.4.0",
     "seqeval>=1.2.2",
-    "torch>=2.10.0",
-    "transformers>=5.3.0",
-    "uvicorn>=0.42.0",
-    "wandb==0.25.0",
+    "accelerate>=0.33.0",
+    "wandb>=0.17.0",
+    "datasets>=2.21.0",
+]
+streamlit = [
+    "streamlit>=1.38.0",
+    "pandas>=2.0.0",
+]
+dev = [
+    "dagshub>=0.3.0",
+    "dvc[s3]>=3.50.0",
+    "ipykernel>=6.0.0",
+    "ipywidgets>=8.0.0",
 ]
 
 [[tool.uv.index]]
 name = "pytorch"
-url = "https://download.pytorch.org/whl/cu130"
+url = "https://download.pytorch.org/whl/cu124"
 explicit = true
 
 [tool.uv.sources]

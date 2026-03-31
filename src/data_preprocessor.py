@@ -53,80 +53,51 @@ class NERDataPreprocessor:
             raise NERException(e, sys)
 
     def harmonize_hun(self, ds: DatasetDict) -> DatasetDict:
-        
-        try:
             """Hungarian is already in master format, just ensuring consistent split names."""
-            logging.info("Harmonizing Hungarian dataset...")
-            
-            # Ensure the column is named 'ner' to be the master standard
-            if "ner_tags" in ds["train"].column_names:
-                ds = ds.rename_column("ner_tags", "ner")
-
-            # Selecting necessary columns
-            ds = ds.select_columns(["tokens", "ner"])
+            try:
+                logging.info("Harmonizing Hungarian dataset...")
                 
-            # Initializing master dataset
-            if self.config.master_dataset == "hun":
-                self.config.master_features = ds["train"].features
-            
-            return self._create_balanced_splits(ds)
-
-        except Exception as e:
-            logging.error("Failed to harmonize Hungarian dataset.")
-            raise NERException(e, sys)
+                if "ner_tags" in ds["train"].column_names:
+                    ds = ds.rename_column("ner_tags", "ner")
+                ds = ds.select_columns(["tokens", "ner"])
+                    
+                if self.config.master_dataset == "hun":
+                    self.config.master_features = ds["train"].features
+                
+                # --- FIX: Just return the original splits ---
+                return ds
+            except Exception as e:
+                logging.error("Failed to harmonize Hungarian dataset.")
+                raise NERException(e, sys)
 
     def harmonize_ger(self, ds: DatasetDict) -> DatasetDict:
         """Maps German BIO tags to the Master Hungarian schema."""
-
         try:
             logging.info("Harmonizing German dataset...")
-            
-            # Rename 'ner_tags' to 'ner' and 'dev' to 'validation'
             ds = ds.rename_column("ner_tags", "ner")
+            
+            # This is good! Safely renaming 'dev' to 'validation'
             if "dev" in ds:
                 ds["validation"] = ds.pop("dev")
-
             ger_labels = ds['train'].features['ner'].feature.names
             ger_id2label = {id: name for id, name in enumerate(ger_labels)}
             master_label2id = self.config.label2id
-
             def map_ids(batch):
-                batch["ner"] = [[master_label2id[ger_id2label[tag_id]] for tag_id in row] for row in batch["ner"]]
+                # Using the safe .get() fallback from earlier!
+                batch["ner"] = [[master_label2id.get(ger_id2label[tag_id], master_label2id["O"]) for tag_id in row] for row in batch["ner"]]
                 return batch
-
             ds = ds.map(map_ids, batched=True)
-
-            # Selecting necessary columns
             ds = ds.select_columns(["tokens", "ner"])
             
-            # Initializing master dataset
             if self.config.master_dataset == "ger":
                 self.config.master_features = ds["train"].features
-
-            return self._create_balanced_splits(ds)
-        
+            # --- FIX: Just return the canonical splits ---
+            return ds
+            
         except Exception as e:
             logging.error("Failed to harmonize German dataset.")
             raise NERException(e, sys)
 
-    def _create_balanced_splits(self, ds: DatasetDict, train_ratio=0.8, seed=42) -> DatasetDict:
-        """Re-splits a dataset into balanced 80/10/10 proportions."""
-
-        try:
-            # Combine existing splits to re-split uniformly
-            full_ds = concatenate_datasets([ds[k] for k in ds.keys()])
-            train_temp = full_ds.train_test_split(test_size=(1 - train_ratio), seed=seed)
-            val_test = train_temp['test'].train_test_split(test_size=0.5, seed=seed)
-            
-            return DatasetDict({
-                'train': train_temp['train'],
-                'validation': val_test['train'],
-                'test': val_test['test']
-            })
-        
-        except Exception as e:
-            logging.error(f"Failed to create balanced for {ds} dataset.")
-            raise NERException(e, sys)
 
     def cast_master_dataset_schema(self, hun_ds: DatasetDict, ger_ds: DatasetDict):
         """Cast master dataset schema for enabling interleaving datasets."""
