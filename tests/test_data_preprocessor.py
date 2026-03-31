@@ -115,7 +115,7 @@ def test_run_pipeline(mock_concat, mock_interleave, preprocessor, raw_hun_ds, ra
     preprocessor.load_raw = MagicMock(return_value={"hun": raw_hun_ds, "ger": raw_ger_ds})
     preprocessor.harmonize_hun = MagicMock(return_value=raw_hun_ds)
     
-    # We need to simulate the split renaming in the mock
+    # Simulate the split renaming in the mock
     harmonized_ger = DatasetDict(raw_ger_ds.items())
     harmonized_ger["validation"] = harmonized_ger.pop("dev")
     preprocessor.harmonize_ger = MagicMock(return_value=harmonized_ger)
@@ -123,11 +123,11 @@ def test_run_pipeline(mock_concat, mock_interleave, preprocessor, raw_hun_ds, ra
     preprocessor.cast_master_dataset_schema = MagicMock(return_value=(raw_hun_ds, harmonized_ger))
     
     # Mocking save_to_disk globally for all datasets
-    with patch.object(DatasetDict, "save_to_disk") as mock_save_dict:
-        with patch.object(Dataset, "save_to_disk") as mock_save_ds:
-            preprocessor.run_pipeline()
-            
-            # verify saves
-            assert mock_save_dict.call_count >= 3 # individual + combined
-            assert mock_interleave.called
-            assert mock_concat.called
+    with patch.object(DatasetDict, "save_to_disk") as mock_save_dict, \
+        patch.object(Dataset, "save_to_disk") as mock_save_ds:
+        
+        preprocessor.run_pipeline()
+        
+        assert mock_save_dict.call_count >= 3
+        assert mock_interleave.called
+        assert mock_concat.called

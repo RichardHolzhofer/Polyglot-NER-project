@@ -9,8 +9,6 @@ def mock_tokenizer():
     tokenizer = MagicMock()
     
     def _mock_call(tokens, **kwargs):
-        # We'll return a dict simulation from the tokenizer
-        # that behaves like BatchEncoding
         class MockEncoding(dict):
             def word_ids(self, batch_index=0):
                 # Corresponding to ["I", "love", "Budapest"] -> [None, 0, 1, 2, 2, None]
