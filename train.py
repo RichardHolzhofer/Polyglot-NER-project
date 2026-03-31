@@ -2,15 +2,16 @@ import argparse
 import os
 import sys
 
-import wandb
 from dotenv import load_dotenv
 
+import wandb
 from src.config import NERConfig
 from src.data_loader import NERDataLoader
 from src.data_preprocessor import NERDataPreprocessor
 from src.exception import NERException
 from src.logger import logging
 from src.trainer import PolyglotTrainer
+
 
 def main():
     try:

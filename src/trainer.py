@@ -5,7 +5,6 @@ from typing import Dict, Optional, Union
 import evaluate
 import numpy as np
 import torch
-import wandb
 from datasets import Dataset
 from transformers import (
     AutoModelForTokenClassification,
@@ -14,6 +13,7 @@ from transformers import (
     TrainingArguments,
 )
 
+import wandb
 from src.config import NERConfig
 from src.data_loader import NERDataLoader
 from src.exception import NERException
