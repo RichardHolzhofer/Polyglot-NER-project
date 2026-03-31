@@ -1,9 +1,7 @@
 from dotenv import load_dotenv
 import os
 import sys
-import dotenv
-from subprocess import CalledProcessError, run
-from typing import List, Dict, Any, Union, Optional
+from typing import List, Union, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
@@ -72,7 +70,7 @@ class PredictionRequest(BaseModel):
     items: Union[str, List[str]] = Field(
         ...,
         description="A single text string or a list of strings to analyze.",
-        example="Kovács János az OTP Bank igazgatója.",
+        json_schema_extra={"example": "Kovács János az OTP Bank igazgatója."}
     )
 
 
