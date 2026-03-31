@@ -1,11 +1,14 @@
 import os
 import sys
-from typing import Dict, List, Optional, Any
-from datasets import load_from_disk, Dataset, DatasetDict
+from typing import Any, Dict, Optional
+
+from datasets import Dataset, DatasetDict, load_from_disk
 from transformers import AutoTokenizer, DataCollatorForTokenClassification
+
 from src.config import NERConfig
-from src.logger import logging
 from src.exception import NERException
+from src.logger import logging
+
 
 class NERDataLoader:
     """
@@ -15,7 +18,9 @@ class NERDataLoader:
         try:
             self.config = config
             self.tokenizer = tokenizer or AutoTokenizer.from_pretrained(config.model_id)
-            self.data_collator = DataCollatorForTokenClassification(tokenizer=self.tokenizer)
+            self.data_collator = DataCollatorForTokenClassification(
+                tokenizer=self.tokenizer
+            )
         except Exception as e:
             logging.error("Failed to initialize NERDataLoader components.")
             raise NERException(e, sys)
@@ -26,27 +31,33 @@ class NERDataLoader:
         """
         try:
             logging.info("Loading and tokenizing datasets...")
-            
+
             # 1. Load the primary gold-only dataset
             gold_path = os.path.join(self.config.data_dir, self.config.processed_path)
             if not os.path.exists(gold_path):
-                raise FileNotFoundError(f"Processed dataset not found: {gold_path}. Run data_preprocessing.py first.")
-            
+                raise FileNotFoundError(
+                    f"Processed dataset not found: {gold_path}. "
+                    "Run data_preprocessing.py first."
+                )
+
             gold_ds = load_from_disk(gold_path)
             tokenized_gold = gold_ds.map(self.tokenize_and_align_labels, batched=True)
-            
+
             datasets = {"gold_only": tokenized_gold}
-            
+
             # 2. Load individual languages for evaluation
-            for lang, path_attr in [("hun", "hun_processed_path"), ("ger", "ger_processed_path")]:
+            for lang, path_attr in [
+                ("hun", "hun_processed_path"),
+                ("ger", "ger_processed_path")
+            ]:
                 lang_path = os.path.join(self.config.data_dir, getattr(self.config, path_attr))
                 if os.path.exists(lang_path):
                     lang_ds = load_from_disk(lang_path)
                     datasets[lang] = lang_ds.map(self.tokenize_and_align_labels, batched=True)
                     logging.info(f"Loaded and tokenized {lang} dataset.")
-            
+
             return datasets
-            
+
         except Exception as e:
             logging.error("Failed to load/tokenize datasets.")
             raise NERException(e, sys)
@@ -58,8 +69,8 @@ class NERDataLoader:
         """
         try:
             tokenized_inputs = self.tokenizer(
-                ds["tokens"], 
-                truncation=True, 
+                ds["tokens"],
+                truncation=True,
                 is_split_into_words=True
             )
 
@@ -95,11 +106,11 @@ class NERDataLoader:
             eval_sets = {
                 "combined": tokenized_datasets["gold_only"]["validation"]
             }
-            
+
             for lang in ["hun", "ger"]:
                 if lang in tokenized_datasets:
                     eval_sets[lang] = tokenized_datasets[lang]["validation"]
-                    
+
             return eval_sets
         except Exception as e:
             logging.error("Failed to get evaluation datasets.")
@@ -113,11 +124,11 @@ class NERDataLoader:
             test_sets = {
                 "combined": tokenized_datasets["gold_only"]["test"]
             }
-            
+
             for lang in ["hun", "ger"]:
                 if lang in tokenized_datasets:
                     test_sets[f"test_{lang}"] = tokenized_datasets[lang]["test"]
-                    
+
             return test_sets
         except Exception as e:
             logging.error("Failed to get test datasets.")

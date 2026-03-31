@@ -1,12 +1,9 @@
 import os
-import sys
-
-from src.exception import NERException
-from src.logger import logging
-
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
+
 from datasets import Features
+
 
 @dataclass
 class NERConfig:
@@ -15,7 +12,7 @@ class NERConfig:
 
     # Data config
     data_dir: str = "data"
-    
+
 
     # Local Raw Data Paths
     raw_data_dir: str = "data/raw"
@@ -31,7 +28,7 @@ class NERConfig:
     processed_path: str = "processed/gold_only_processed"
     hun_processed_path: str = "processed/hun_processed"
     ger_processed_path: str = "processed/ger_processed"
-    
+
     # Training hyperparameters
     learning_rate: float = 1e-5
     num_train_epochs: int = 5
@@ -40,12 +37,12 @@ class NERConfig:
     weight_decay: float = 0.01
     warmup_ratio: float = 0.1
     scheduler: str = "cosine"
-    
+
     # Label config
     label_names: List[str] = field(default_factory=lambda: [
         "O", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC", "B-MISC", "I-MISC"
     ])
-    
+
     # Output config
     training_dir: str = "model_checkpoints/"
     output_dir: str = "final_model"
@@ -60,7 +57,7 @@ class NERConfig:
     @property
     def id2label(self) -> Dict[int, str]:
         return {i: label for i, label in enumerate(self.label_names)}
-    
+
     @property
     def label2id(self) -> Dict[str, int]:
         return {label: i for i, label in enumerate(self.label_names)}

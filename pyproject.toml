@@ -33,7 +33,25 @@ dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
     "httpx>=0.27.0",
+    "ruff>=0.5.0",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [
+    "notebooks",
+    "venv",
+    ".venv",
+    "__pypackages__",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]  # Error, Flake8, Isort, Warning
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
 
 [[tool.uv.index]]
 name = "pytorch"

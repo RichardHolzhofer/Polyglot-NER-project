@@ -1,15 +1,16 @@
-from dotenv import load_dotenv
 import os
 import sys
-from typing import List, Union, Optional
+from contextlib import asynccontextmanager
+from typing import List, Optional, Union
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from contextlib import asynccontextmanager
 
 from src.config import NERConfig
-from src.predictor import NERPredictor
-from src.logger import logging
 from src.exception import NERException
+from src.logger import logging
+from src.predictor import NERPredictor
 
 load_dotenv()
 

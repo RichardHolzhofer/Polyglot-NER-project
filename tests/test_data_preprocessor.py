@@ -1,8 +1,10 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+from datasets import ClassLabel, Dataset, DatasetDict, Features, Sequence, Value
+
 from src.data_preprocessor import NERDataPreprocessor
-from datasets import DatasetDict, Dataset, Features, Value, Sequence, ClassLabel
-import os
+
 
 @pytest.fixture
 def mock_tokenizer():
@@ -46,9 +48,9 @@ def test_harmonize_hun(preprocessor, raw_hun_ds):
     """Test that Hungarian dataset is renamed and columns selected."""
     # Ensure master_dataset is "hun" to set master_features
     preprocessor.config.master_dataset = "hun"
-    
+
     result = preprocessor.harmonize_hun(raw_hun_ds)
-    
+
     assert "ner" in result["train"].column_names
     assert "ner_tags" not in result["train"].column_names
     assert set(result["train"].column_names) == {"tokens", "ner"}
@@ -57,19 +59,22 @@ def test_harmonize_hun(preprocessor, raw_hun_ds):
 def test_harmonize_ger(preprocessor, raw_ger_ds):
     """Test mapping of German labels and renaming of 'dev' split."""
     # Mocking config.label2id for the test
-    preprocessor.config.label_names = ["O", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC", "B-MISC", "I-MISC"]
-    
+    preprocessor.config.label_names = [
+        "O", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC", "B-MISC", "I-MISC"
+    ]
+
     # B-LOC should be at index 5 in the master list
     assert preprocessor.config.label2id["B-LOC"] == 5
-    
+
     result = preprocessor.harmonize_ger(raw_ger_ds)
-    
+
     # Check split renaming
     assert "validation" in result
     assert "dev" not in result
-    
+
     # Check value mapping (3 in GER maps to B-LOC / index 5 in Master)
-    assert result["train"][0]["ner"] == [0, 0, 0] # Fallback to O because names don't match exactly in this simple mock
+    # Fallback to O because names don't match exactly in this simple mock
+    assert result["train"][0]["ner"] == [0, 0, 0]
 
 @patch("src.data_preprocessor.load_dataset")
 @patch("src.data_preprocessor.load_from_disk")
@@ -81,7 +86,7 @@ def test_load_raw(mock_makedirs, mock_exists, mock_load_disk, mock_load_hf, prep
     mock_exists.return_value = True
     preprocessor.load_raw()
     assert mock_load_disk.call_count == 2
-    
+
     # Case 2: Missing from disk
     mock_exists.return_value = False
     mock_load_hf.return_value = MagicMock()
@@ -93,11 +98,11 @@ def test_cast_master_dataset_schema(preprocessor, raw_hun_ds, raw_ger_ds):
     """Test schema casting logic."""
     # Prepare mock schemas
     preprocessor.config.master_features = raw_hun_ds["train"].features
-    
+
     # Mocking cast method for datasets
     raw_hun_ds["train"].cast = MagicMock(return_value="cast_hun")
     raw_ger_ds["train"].cast = MagicMock(return_value="cast_ger")
-    
+
     with patch.object(DatasetDict, "cast", return_value="cast_result") as mock_cast:
         res_hun, res_ger = preprocessor.cast_master_dataset_schema(raw_hun_ds, raw_ger_ds)
         assert res_hun == "cast_result"
@@ -110,24 +115,25 @@ def test_run_pipeline(mock_concat, mock_interleave, preprocessor, raw_hun_ds, ra
     """Verify the full pipeline orchestration."""
     mock_interleave.return_value = "interleaved"
     mock_concat.return_value = "concatenated"
-    
+
     # Mocking internal methods
     preprocessor.load_raw = MagicMock(return_value={"hun": raw_hun_ds, "ger": raw_ger_ds})
     preprocessor.harmonize_hun = MagicMock(return_value=raw_hun_ds)
-    
+
     # Simulate the split renaming in the mock
     harmonized_ger = DatasetDict(raw_ger_ds.items())
     harmonized_ger["validation"] = harmonized_ger.pop("dev")
     preprocessor.harmonize_ger = MagicMock(return_value=harmonized_ger)
-    
+
     preprocessor.cast_master_dataset_schema = MagicMock(return_value=(raw_hun_ds, harmonized_ger))
-    
+
     # Mocking save_to_disk globally for all datasets
-    with patch.object(DatasetDict, "save_to_disk") as mock_save_dict, \
-        patch.object(Dataset, "save_to_disk") as mock_save_ds:
-        
+    with (
+        patch.object(DatasetDict, "save_to_disk") as mock_save_dict,
+        patch.object(Dataset, "save_to_disk"),
+    ):
         preprocessor.run_pipeline()
-        
+
         assert mock_save_dict.call_count >= 3
         assert mock_interleave.called
         assert mock_concat.called

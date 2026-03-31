@@ -1,16 +1,24 @@
 import os
 import sys
-import numpy as np
+from typing import Dict, Optional, Union
+
 import evaluate
-from typing import Dict, Optional, Any, Union
-from datasets import Dataset
-from transformers import TrainingArguments, Trainer, EarlyStoppingCallback, AutoModelForTokenClassification
-import wandb
+import numpy as np
 import torch
+from datasets import Dataset
+from transformers import (
+    AutoModelForTokenClassification,
+    EarlyStoppingCallback,
+    Trainer,
+    TrainingArguments,
+)
+
+import wandb
 from src.config import NERConfig
 from src.data_loader import NERDataLoader
-from src.logger import logging
 from src.exception import NERException
+from src.logger import logging
+
 
 class PolyglotTrainer:
     """
@@ -36,27 +44,36 @@ class PolyglotTrainer:
             predictions = np.argmax(logits, axis=-1)
 
             label_names = self.config.label_names
-            true_labels = [[label_names[l] for l in label if l != -100] for label in labels]
+            true_labels = [
+                [label_names[lb] for lb in label if lb != -100]
+                for label in labels
+            ]
             true_predictions = [
-                [label_names[p] for (p, l) in zip(prediction, label) if l != -100]
+                [label_names[p] for (p, lb) in zip(prediction, label) if lb != -100]
                 for prediction, label in zip(predictions, labels)
             ]
-            
-            all_metrics = self.metric.compute(predictions=true_predictions, references=true_labels)
-            
+
+            all_metrics = self.metric.compute(
+                predictions=true_predictions,
+                references=true_labels
+            )
+
             results = {
                 "overall_precision": all_metrics["overall_precision"],
                 "overall_recall": all_metrics["overall_recall"],
                 "overall_f1": all_metrics["overall_f1"],
                 "overall_accuracy": all_metrics["overall_accuracy"],
             }
-            
+
             for k, v in all_metrics.items():
-                if k not in ["overall_precision", "overall_recall", "overall_f1", "overall_accuracy"]:
+                if k not in [
+                    "overall_precision", "overall_recall",
+                    "overall_f1", "overall_accuracy"
+                ]:
                     results[f"{k}_f1"] = v["f1"]
                     results[f"{k}_precision"] = v["precision"]
                     results[f"{k}_recall"] = v["recall"]
-                    
+
             return results
         except Exception as e:
             logging.error("Failed to compute metrics during evaluation.")
@@ -96,7 +113,10 @@ class PolyglotTrainer:
                 dataloader_persistent_workers=True,
                 dataloader_prefetch_factor=2,
                 push_to_hub=False,
-                hub_model_id=f"{self.config.hub_repo_id}/{training_run_name}"
+                hub_model_id=(
+                    f"{self.config.hub_repo_id}/"
+                    f"{training_run_name}"
+                )
             )
 
             self.trainer = Trainer(
@@ -113,25 +133,31 @@ class PolyglotTrainer:
             logging.error("Failed to setup Hugging Face Trainer.")
             raise NERException(e, sys)
 
-    def train(self, eval_dataset: Optional[Union[Dataset, Dict[str, Dataset]]] = None, run_name: Optional[str] = None):
+    def train(
+        self,
+        eval_dataset: Optional[Union[Dataset, Dict[str, Dataset]]] = None,
+        run_name: Optional[str] = None
+    ):
         """
         Starts the training process with Weights & Biases tracking.
         """
         try:
             # Initialize Model
             if self.model is None:
-                logging.info(f"Initializing AutoModelForTokenClassification natively from: {self.config.model_id}")
+                logging.info(
+                    f"Initializing model natively from: {self.config.model_id}"
+                )
                 self.model = AutoModelForTokenClassification.from_pretrained(
                     self.config.model_id,
                     id2label=self.config.id2label,
                     label2id=self.config.label2id,
                 )
-                
+
             # Load and Tokenize Datasets
             logging.info("Preparing datasets for training...")
             dn = self.data_loader.load_datasets()
             train_ds = dn["gold_only"]["train"]
-            
+
             # Setup Trainer
             eval_ds = eval_dataset or self.data_loader.get_eval_datasets(dn)
 
@@ -140,7 +166,7 @@ class PolyglotTrainer:
                 eval_dataset = eval_ds,
                 run_name = run_name
                 )
-            
+
             # Initialize W&B for training
             logging.info(f"Initializing W&B run: {run_name or self.config.output_model_name}")
             base_run_name = run_name or self.config.output_model_name
@@ -148,7 +174,7 @@ class PolyglotTrainer:
                 project="polyglot-ner-project",
                 name=f"{base_run_name}_training"
             )
-            
+
             # Start Training
             logging.info("Starting training loop...")
             self.trainer.train()
@@ -180,7 +206,7 @@ class PolyglotTrainer:
             # Evaluate on Test Set
             logging.info("Evaluating best model on test datasets...")
             test_sets = self.data_loader.get_test_datasets(dn)
-            
+
             for test_name, test_ds in test_sets.items():
                 logging.info(f"Running evaluation on test set: {test_name}")
 
@@ -190,17 +216,20 @@ class PolyglotTrainer:
                     eval_dataset=test_ds,
                     run_name=run_name
                     )
-                
+
                 test_results = self.trainer.evaluate()
                 # Rename keys to include the test_name prefix for clarity in logs/W&B
-                prefixed_results = {f"eval/{test_name}_{k.replace('eval_', '')}": v for k, v in test_results.items()}
+                prefixed_results = {
+                    f"eval/{test_name}_{k.replace('eval_', '')}": v
+                    for k, v in test_results.items()
+                }
                 logging.info(f"Test results for {test_name}: {prefixed_results}")
                 wandb.log(prefixed_results)
-            
+
             # Finish testing
             wandb.finish()
-            
-            
+
+
         except Exception as e:
             logging.error("An error occurred during training.")
             raise NERException(e, sys)

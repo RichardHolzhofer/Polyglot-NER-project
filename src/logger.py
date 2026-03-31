@@ -1,6 +1,5 @@
-import os
 import logging
-from datetime import datetime
+import os
 
 LOG_FILE = "polyglot_ner.log"
 
