@@ -7,15 +7,15 @@ import streamlit as st
 from src.config import NERConfig
 from src.predictor import NERPredictor
 
-# --- PAGE CONFIGURATION ---
+# PAGE CONFIGURATION
 st.set_page_config(
-    page_title="Polyglot NER Explorer (Cloud)",
+    page_title="Polyglot NER Explorer",
     page_icon="🔍",
     layout="centered",
 )
 
 
-# --- CUSTOM CSS (Loaded from separate file) ---
+# CUSTOM CSS (Loaded from separate file)
 def load_css(file_path):
     if os.path.exists(file_path):
         with open(file_path) as f:
@@ -24,8 +24,6 @@ def load_css(file_path):
 
 load_css("style.css")
 
-
-# --- MODEL INITIALIZATION (@st.cache_resource) ---
 @st.cache_resource
 def get_predictor():
     """Initializes and caches the NER Predictor for single-process cloud deployment."""
@@ -38,7 +36,7 @@ def get_predictor():
     return NERPredictor(config)
 
 
-# --- APP HEADER ---
+# APP HEADER
 st.markdown("<h1 class='header-text'>🔍 Polyglot NER Explorer</h1>", unsafe_allow_html=True)
 st.markdown(
     """
@@ -50,7 +48,7 @@ using an integrated Transformer model.
     unsafe_allow_html=True,
 )
 
-# --- SIDEBAR ---
+# SIDEBAR
 with st.sidebar:
     st.title("⚙️ Cloud Configuration")
     st.info(
@@ -61,7 +59,7 @@ with st.sidebar:
     st.markdown("### 🏷️ Supported Entities")
     st.markdown("- **PER**: Persons\n- **ORG**: Organizations\n- **LOC**: Locations\n- **MISC**: Miscellaneous")
 
-# --- MAIN INTERFACE ---
+# MAIN INTERFACE
 st.subheader("Analyze Text")
 default_text = "Morgen treffen sich Vertreter der Deutschen Bahn am Potsdamer Platz in Berlin."
 user_text = st.text_area("Input your text here:", placeholder=default_text, height=150)
@@ -132,7 +130,7 @@ if analyze_btn:
             except Exception as e:
                 st.error(f"An error occurred during integrated inference: {str(e)}")
 
-# --- FOOTER ---
+# FOOTER
 footer_html = """
 <br><hr><center>
 <small>Polyglot NER Project • Integrated Cloud Deployment</small>
