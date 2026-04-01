@@ -16,14 +16,14 @@ def mock_tokenizer():
                 # Corresponding to ["I", "love", "Budapest"] -> [None, 0, 1, 2, 2, None]
                 return [None, 0, 1, 2, 2, None]
 
-        encoding = MockEncoding({
-            "input_ids": [0, 101, 102, 103, 104, 1],
-            "attention_mask": [1, 1, 1, 1, 1, 1]
-        })
+        encoding = MockEncoding(
+            {"input_ids": [0, 101, 102, 103, 104, 1], "attention_mask": [1, 1, 1, 1, 1, 1]}
+        )
         return encoding
 
     tokenizer.side_effect = _mock_call
     return tokenizer
+
 
 def test_loader_init(config, mock_tokenizer):
     """Test standard initialization."""
@@ -32,6 +32,7 @@ def test_loader_init(config, mock_tokenizer):
         assert loader.config == config
         assert loader.tokenizer == mock_tokenizer
         assert loader.data_collator is not None
+
 
 def test_tokenize_and_align_labels(config, mock_tokenizer):
     """
@@ -43,15 +44,13 @@ def test_tokenize_and_align_labels(config, mock_tokenizer):
     """
     loader = NERDataLoader(config, tokenizer=mock_tokenizer)
 
-    dummy_data = {
-        "tokens": [["I", "love", "Budapest"]],
-        "ner": [[0, 0, 5]]
-    }
+    dummy_data = {"tokens": [["I", "love", "Budapest"]], "ner": [[0, 0, 5]]}
 
     result = loader.tokenize_and_align_labels(dummy_data)
 
     assert "labels" in result
     assert result["labels"][0] == [-100, 0, 0, 5, -100, -100]
+
 
 def test_load_datasets_missing_file(config, mock_tokenizer):
     """
@@ -61,8 +60,10 @@ def test_load_datasets_missing_file(config, mock_tokenizer):
     loader = NERDataLoader(config, tokenizer=mock_tokenizer)
     with patch("os.path.exists", return_value=False):
         from src.exception import NERException
+
         with pytest.raises(NERException, match="Processed dataset not found"):
             loader.load_datasets()
+
 
 @patch("src.data_loader.load_from_disk")
 @patch("os.path.exists")
@@ -88,6 +89,7 @@ def test_load_datasets_success(mock_exists, mock_load, config, mock_tokenizer):
     # Verify mapping was called
     assert mock_ds.map.call_count == 3
 
+
 def test_get_eval_test_datasets(config, mock_tokenizer):
     """Test extraction of validation and test splits."""
     loader = NERDataLoader(config, tokenizer=mock_tokenizer)
@@ -95,7 +97,7 @@ def test_get_eval_test_datasets(config, mock_tokenizer):
     mock_datasets = {
         "gold_only": {"validation": "v_gold", "test": "t_gold"},
         "hun": {"validation": "v_hun", "test": "t_hun"},
-        "ger": {"validation": "v_ger", "test": "t_ger"}
+        "ger": {"validation": "v_ger", "test": "t_ger"},
     }
 
     eval_sets = loader.get_eval_datasets(mock_datasets)

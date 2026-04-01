@@ -12,21 +12,26 @@ st.set_page_config(
     layout="centered",
 )
 
+
 # --- CUSTOM CSS (Loaded from separate file) ---
 def load_css(file_path):
     with open(file_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
+
 load_css("style.css")
 
 # --- APP HEADER ---
 st.markdown("<h1 class='header-text'>🔍 Polyglot NER Explorer</h1>", unsafe_allow_html=True)
-st.markdown("""
+st.markdown(
+    """
 <p style='text-align: center; color: #666; margin-top: 0.5rem; margin-bottom: 2rem;'>
 Extract Named Entities from <b>Hungarian</b> and <b>German</b> text
 using a fine-tuned Transformer model.
 </p>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # --- SIDEBAR / SETTINGS ---
 with st.sidebar:
@@ -54,21 +59,12 @@ with st.sidebar:
 
 # --- MAIN INTERFACE ---
 st.subheader("Analyze Text")
-default_text = "Kovács János az OTP Bank igazgatója Budapesten."
-user_text = st.text_area(
-    "Input your text here:",
-    value="",
-    placeholder=default_text,
-    height=150
-)
+default_text = "Morgen treffen sich Vertreter der Deutschen Bahn am Potsdamer Platz in Berlin."
+user_text = st.text_area("Input your text here:", placeholder=default_text, height=150)
 
 # Color Mapping for Entities
-COLOR_MAP = {
-    "PER": "entity-per",
-    "ORG": "entity-org",
-    "LOC": "entity-loc",
-    "MISC": "entity-misc"
-}
+COLOR_MAP = {"PER": "entity-per", "ORG": "entity-org", "LOC": "entity-loc", "MISC": "entity-misc"}
+
 
 def highlight_entities(text: str, entities: List[Dict]):
     """Small utility to show entities in a readable way."""
@@ -76,13 +72,13 @@ def highlight_entities(text: str, entities: List[Dict]):
         return text
 
     # Sort entities by start position in reverse to avoid index shifting
-    sorted_entities = sorted(entities, key=lambda x: x['start'], reverse=True)
+    sorted_entities = sorted(entities, key=lambda x: x["start"], reverse=True)
 
     html_text = text
     for ent in sorted_entities:
-        start, end = ent['start'], ent['end']
-        label = ent['entity_group']
-        word = ent['word']
+        start, end = ent["start"], ent["end"]
+        label = ent["entity_group"]
+        word = ent["word"]
         css_class = COLOR_MAP.get(label, "entity-misc")
 
         # Replace the range with highlighted HTML
@@ -90,6 +86,7 @@ def highlight_entities(text: str, entities: List[Dict]):
         html_text = html_text[:start] + tag + html_text[end:]
 
     return html_text
+
 
 cols = st.columns([1, 4])
 with cols[0]:
@@ -102,9 +99,7 @@ if analyze_btn:
         with st.spinner("Model is thinking..."):
             try:
                 response = requests.post(
-                    f"{API_URL}/predict",
-                    json={"items": user_text},
-                    timeout=10
+                    f"{API_URL}/predict", json={"items": user_text}, timeout=10
                 )
 
                 if response.status_code == 200:
@@ -126,12 +121,12 @@ if analyze_btn:
                         st.markdown("#### Entity Details")
                         df = pd.DataFrame(results)
                         # Filter/Clean columns
-                        if 'score' in df.columns:
-                            df['score'] = df['score'].apply(lambda x: f"{x:.2%}")
+                        if "score" in df.columns:
+                            df["score"] = df["score"].apply(lambda x: f"{x:.2%}")
                         st.dataframe(
-                            df[['word', 'entity_group', 'score']],
+                            df[["word", "entity_group", "score"]],
                             hide_index=True,
-                            use_container_width=True
+                            use_container_width=True,
                         )
                 else:
                     st.error(f"API Error: Server returned {response.status_code}")

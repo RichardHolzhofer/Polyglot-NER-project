@@ -13,7 +13,6 @@ class NERConfig:
     # Data config
     data_dir: str = "data"
 
-
     # Local Raw Data Paths
     raw_data_dir: str = "data/raw"
     hun_raw_path: str = "data/raw/hun_raw"
@@ -39,14 +38,24 @@ class NERConfig:
     scheduler: str = "cosine"
 
     # Label config
-    label_names: List[str] = field(default_factory=lambda: [
-        "O", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC", "B-MISC", "I-MISC"
-    ])
+    label_names: List[str] = field(
+        default_factory=lambda: [
+            "O",
+            "B-PER",
+            "I-PER",
+            "B-ORG",
+            "I-ORG",
+            "B-LOC",
+            "I-LOC",
+            "B-MISC",
+            "I-MISC",
+        ]
+    )
 
     # Output config
     training_dir: str = "model_checkpoints/"
     output_dir: str = "final_model"
-    output_model_name:str = "xlm-roberta-ner-hun-ger"
+    output_model_name: str = "xlm-roberta-ner-hun-ger"
     hub_repo_id: str = field(default_factory=lambda: os.getenv("HUB_REPO_ID"))
 
     # Master features

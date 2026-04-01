@@ -14,6 +14,7 @@ class NERPredictor:
     Production-ready predictor for the Polyglot NER model.
     Wraps the Hugging Face pipeline for easy inference.
     """
+
     def __init__(self, config: Optional[NERConfig] = None):
         try:
             self.config = config or NERConfig()
@@ -23,10 +24,7 @@ class NERPredictor:
                 self.model_path = self.config.output_dir
                 logging.info("Using LOCAL model.")
             else:
-                self.model_path = (
-                    f"{self.config.hub_repo_id}/"
-                    f"{self.config.output_model_name}"
-                )
+                self.model_path = f"{self.config.hub_repo_id}/{self.config.output_model_name}"
                 logging.info(
                     f"No local model found at {self.config.output_dir}. "
                     f"Falling back to HUB: {self.model_path}"
@@ -36,7 +34,7 @@ class NERPredictor:
                 "ner",
                 model=self.model_path,
                 tokenizer=self.model_path,
-                aggregation_strategy="first"
+                aggregation_strategy="first",
             )
             logging.info("Inference pipeline loaded successfully.")
 
@@ -45,8 +43,7 @@ class NERPredictor:
             raise NERException(e, sys)
 
     def predict(
-        self,
-        inputs: Union[str, List[str]]
+        self, inputs: Union[str, List[str]]
     ) -> Union[List[Dict[str, Any]], List[List[Dict[str, Any]]]]:
         """
         Predicts entities in a single string or a batch of strings.
@@ -58,22 +55,22 @@ class NERPredictor:
             # Post-processing helper
             def process_entities(entities, text):
                 for ent in entities:
-                    start, end = ent['start'], ent['end']
+                    start, end = ent["start"], ent["end"]
                     word = text[start:end]
 
                     # Trim leading punctuation/whitespace
-                    while word and not (word[0].isalnum() or word[0] == '-'):
+                    while word and not (word[0].isalnum() or word[0] == "-"):
                         word = word[1:]
                         start += 1
 
                     # Trim trailing punctuation/whitespace
-                    while word and not (word[-1].isalnum() or word[-1] == '-'):
+                    while word and not (word[-1].isalnum() or word[-1] == "-"):
                         word = word[:-1]
                         end -= 1
 
-                    ent['start'] = start
-                    ent['end'] = end
-                    ent['word'] = word
+                    ent["start"] = start
+                    ent["end"] = end
+                    ent["word"] = word
 
             if isinstance(inputs, str):
                 process_entities(results, inputs)

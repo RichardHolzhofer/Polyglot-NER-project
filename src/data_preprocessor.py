@@ -20,6 +20,7 @@ class NERDataPreprocessor:
     """
     Handles the transformation of raw datasets into harmonized, BIO-tagged formats.
     """
+
     def __init__(self, config: NERConfig):
         try:
             self.config = config
@@ -39,25 +40,21 @@ class NERDataPreprocessor:
                 "hun": (
                     self.config.hun_raw_id,
                     self.config.hun_raw_path,
-                    {"revision": "convert/parquet"}
+                    {"revision": "convert/parquet"},
                 ),
                 "ger": (
                     self.config.ger_raw_id,
                     self.config.ger_raw_path,
-                    {"name": self.config.ger_raw_subset}
-                )
+                    {"name": self.config.ger_raw_subset},
+                ),
             }
 
             for key, (hf_id, local_path, hf_kwargs) in sources.items():
                 if os.path.exists(local_path):
-                    logging.info(
-                        f"Loading {key} raw dataset from local cache: {local_path}"
-                    )
+                    logging.info(f"Loading {key} raw dataset from local cache: {local_path}")
                     datasets[key] = load_from_disk(local_path)
                 else:
-                    logging.info(
-                        f"Downloading {key} raw dataset from Hugging Face Hub: {hf_id}"
-                    )
+                    logging.info(f"Downloading {key} raw dataset from Hugging Face Hub: {hf_id}")
                     ds = load_dataset(hf_id, **hf_kwargs)
                     datasets[key] = ds
 
@@ -100,7 +97,7 @@ class NERDataPreprocessor:
             # This is good! Safely renaming 'dev' to 'validation'
             if "dev" in ds:
                 ds["validation"] = ds.pop("dev")
-            ger_labels = ds['train'].features['ner'].feature.names
+            ger_labels = ds["train"].features["ner"].feature.names
             ger_id2label = {id: name for id, name in enumerate(ger_labels)}
             master_label2id = self.config.label2id
 
@@ -154,8 +151,7 @@ class NERDataPreprocessor:
 
             # Cast master dataset schema
             processed_hun, processed_ger = self.cast_master_dataset_schema(
-                processed_hun,
-                processed_ger
+                processed_hun, processed_ger
             )
 
             # Save individual processed sets
@@ -171,22 +167,16 @@ class NERDataPreprocessor:
             gold_train = interleave_datasets(
                 [processed_hun["train"], processed_ger["train"]],
                 seed=42,
-                stopping_strategy="all_exhausted"  # Ensures no data is lost
+                stopping_strategy="all_exhausted",  # Ensures no data is lost
             )
 
             # Validation and test sets can be concatenated
             gold_val = concatenate_datasets(
                 [processed_hun["validation"], processed_ger["validation"]]
             )
-            gold_test = concatenate_datasets(
-                [processed_hun["test"], processed_ger["test"]]
-            )
+            gold_test = concatenate_datasets([processed_hun["test"], processed_ger["test"]])
 
-            gold_ds = DatasetDict({
-                'train': gold_train,
-                'validation': gold_val,
-                'test': gold_test
-            })
+            gold_ds = DatasetDict({"train": gold_train, "validation": gold_val, "test": gold_test})
             gold_path = os.path.join(base_out, self.config.processed_path)
             gold_ds.save_to_disk(gold_path)
             logging.info(f"Saved combined Gold-Only dataset to {gold_path}")

@@ -24,6 +24,7 @@ class PolyglotTrainer:
     """
     Wrapper for the Hugging Face Trainer to handle multilingual NER training and evaluation.
     """
+
     def __init__(self, config: NERConfig, data_loader: NERDataLoader):
         try:
             self.config = config
@@ -44,19 +45,13 @@ class PolyglotTrainer:
             predictions = np.argmax(logits, axis=-1)
 
             label_names = self.config.label_names
-            true_labels = [
-                [label_names[lb] for lb in label if lb != -100]
-                for label in labels
-            ]
+            true_labels = [[label_names[lb] for lb in label if lb != -100] for label in labels]
             true_predictions = [
                 [label_names[p] for (p, lb) in zip(prediction, label) if lb != -100]
                 for prediction, label in zip(predictions, labels)
             ]
 
-            all_metrics = self.metric.compute(
-                predictions=true_predictions,
-                references=true_labels
-            )
+            all_metrics = self.metric.compute(predictions=true_predictions, references=true_labels)
 
             results = {
                 "overall_precision": all_metrics["overall_precision"],
@@ -67,8 +62,10 @@ class PolyglotTrainer:
 
             for k, v in all_metrics.items():
                 if k not in [
-                    "overall_precision", "overall_recall",
-                    "overall_f1", "overall_accuracy"
+                    "overall_precision",
+                    "overall_recall",
+                    "overall_f1",
+                    "overall_accuracy",
                 ]:
                     results[f"{k}_f1"] = v["f1"]
                     results[f"{k}_precision"] = v["precision"]
@@ -113,10 +110,7 @@ class PolyglotTrainer:
                 dataloader_persistent_workers=True,
                 dataloader_prefetch_factor=2,
                 push_to_hub=False,
-                hub_model_id=(
-                    f"{self.config.hub_repo_id}/"
-                    f"{training_run_name}"
-                )
+                hub_model_id=(f"{self.config.hub_repo_id}/{training_run_name}"),
             )
 
             self.trainer = Trainer(
@@ -127,7 +121,7 @@ class PolyglotTrainer:
                 data_collator=self.data_loader.data_collator,
                 compute_metrics=self.compute_metrics,
                 processing_class=self.data_loader.tokenizer,
-                callbacks=[EarlyStoppingCallback(early_stopping_patience=2)]
+                callbacks=[EarlyStoppingCallback(early_stopping_patience=2)],
             )
         except Exception as e:
             logging.error("Failed to setup Hugging Face Trainer.")
@@ -136,7 +130,7 @@ class PolyglotTrainer:
     def train(
         self,
         eval_dataset: Optional[Union[Dataset, Dict[str, Dataset]]] = None,
-        run_name: Optional[str] = None
+        run_name: Optional[str] = None,
     ):
         """
         Starts the training process with Weights & Biases tracking.
@@ -144,9 +138,7 @@ class PolyglotTrainer:
         try:
             # Initialize Model
             if self.model is None:
-                logging.info(
-                    f"Initializing model natively from: {self.config.model_id}"
-                )
+                logging.info(f"Initializing model natively from: {self.config.model_id}")
                 self.model = AutoModelForTokenClassification.from_pretrained(
                     self.config.model_id,
                     id2label=self.config.id2label,
@@ -161,19 +153,12 @@ class PolyglotTrainer:
             # Setup Trainer
             eval_ds = eval_dataset or self.data_loader.get_eval_datasets(dn)
 
-            self.setup_trainer(
-                train_dataset = train_ds,
-                eval_dataset = eval_ds,
-                run_name = run_name
-                )
+            self.setup_trainer(train_dataset=train_ds, eval_dataset=eval_ds, run_name=run_name)
 
             # Initialize W&B for training
             logging.info(f"Initializing W&B run: {run_name or self.config.output_model_name}")
             base_run_name = run_name or self.config.output_model_name
-            wandb.init(
-                project="polyglot-ner-project",
-                name=f"{base_run_name}_training"
-            )
+            wandb.init(project="polyglot-ner-project", name=f"{base_run_name}_training")
 
             # Start Training
             logging.info("Starting training loop...")
@@ -181,7 +166,7 @@ class PolyglotTrainer:
             # Finish Training
             wandb.finish()
 
-            #Push best model to HuggingFace
+            # Push best model to HuggingFace
             logging.info("Pushing model and tokenizer to Hub")
             self.trainer.push_to_hub()
             logging.info("Model pushed to Hub successfully.")
@@ -198,10 +183,7 @@ class PolyglotTrainer:
             # Initialize W&B for testing
             logging.info(f"Initializing W&B run: {run_name or self.config.output_model_name}")
             base_run_name = run_name or self.config.output_model_name
-            wandb.init(
-                project="polyglot-ner-project",
-                name=f"{base_run_name}_test"
-            )
+            wandb.init(project="polyglot-ner-project", name=f"{base_run_name}_test")
 
             # Evaluate on Test Set
             logging.info("Evaluating best model on test datasets...")
@@ -211,24 +193,18 @@ class PolyglotTrainer:
                 logging.info(f"Running evaluation on test set: {test_name}")
 
                 # Initialize Trainer for testing
-                self.setup_trainer(
-                    train_dataset=None,
-                    eval_dataset=test_ds,
-                    run_name=run_name
-                    )
+                self.setup_trainer(train_dataset=None, eval_dataset=test_ds, run_name=run_name)
 
                 test_results = self.trainer.evaluate()
                 # Rename keys to include the test_name prefix for clarity in logs/W&B
                 prefixed_results = {
-                    f"eval/{test_name}_{k.replace('eval_', '')}": v
-                    for k, v in test_results.items()
+                    f"eval/{test_name}_{k.replace('eval_', '')}": v for k, v in test_results.items()
                 }
                 logging.info(f"Test results for {test_name}: {prefixed_results}")
                 wandb.log(prefixed_results)
 
             # Finish testing
             wandb.finish()
-
 
         except Exception as e:
             logging.error("An error occurred during training.")

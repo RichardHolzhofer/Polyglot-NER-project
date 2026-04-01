@@ -5,6 +5,8 @@ description = "A multilingual Named Entity Recognition project for Hungarian and
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "datasets>=4.8.3",
+    "fastapi>=0.135.2",
     "python-dotenv>=1.2.2",
     "requests>=2.32.5",
 ]
@@ -47,18 +49,18 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "W"]  # Error, Flake8, Isort, Warning
+select = ["E", "F", "I"]  # Error, Flake8, Isort, Warning
 ignore = []
 
 [tool.ruff.lint.isort]
 known-first-party = ["src"]
 
 [[tool.uv.index]]
-name = "pytorch"
-url = "https://download.pytorch.org/whl/cu124"
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
 [tool.uv.sources]
-torch = { index = "pytorch" }
-torchvision = { index = "pytorch" }
-torchaudio = { index = "pytorch" }
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
+torchaudio = { index = "pytorch-cpu" }

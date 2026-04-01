@@ -14,13 +14,12 @@ class NERDataLoader:
     """
     Handles loading and on-the-fly tokenization of processed datasets.
     """
+
     def __init__(self, config: NERConfig, tokenizer: Optional[AutoTokenizer] = None):
         try:
             self.config = config
             self.tokenizer = tokenizer or AutoTokenizer.from_pretrained(config.model_id)
-            self.data_collator = DataCollatorForTokenClassification(
-                tokenizer=self.tokenizer
-            )
+            self.data_collator = DataCollatorForTokenClassification(tokenizer=self.tokenizer)
         except Exception as e:
             logging.error("Failed to initialize NERDataLoader components.")
             raise NERException(e, sys)
@@ -36,8 +35,7 @@ class NERDataLoader:
             gold_path = os.path.join(self.config.data_dir, self.config.processed_path)
             if not os.path.exists(gold_path):
                 raise FileNotFoundError(
-                    f"Processed dataset not found: {gold_path}. "
-                    "Run data_preprocessing.py first."
+                    f"Processed dataset not found: {gold_path}. Run data_preprocessing.py first."
                 )
 
             gold_ds = load_from_disk(gold_path)
@@ -46,10 +44,7 @@ class NERDataLoader:
             datasets = {"gold_only": tokenized_gold}
 
             # 2. Load individual languages for evaluation
-            for lang, path_attr in [
-                ("hun", "hun_processed_path"),
-                ("ger", "ger_processed_path")
-            ]:
+            for lang, path_attr in [("hun", "hun_processed_path"), ("ger", "ger_processed_path")]:
                 lang_path = os.path.join(self.config.data_dir, getattr(self.config, path_attr))
                 if os.path.exists(lang_path):
                     lang_ds = load_from_disk(lang_path)
@@ -69,9 +64,7 @@ class NERDataLoader:
         """
         try:
             tokenized_inputs = self.tokenizer(
-                ds["tokens"],
-                truncation=True,
-                is_split_into_words=True
+                ds["tokens"], truncation=True, is_split_into_words=True
             )
 
             labels = []
@@ -103,9 +96,7 @@ class NERDataLoader:
         Returns a dictionary of tokenized validation sets for multi-language evaluation.
         """
         try:
-            eval_sets = {
-                "combined": tokenized_datasets["gold_only"]["validation"]
-            }
+            eval_sets = {"combined": tokenized_datasets["gold_only"]["validation"]}
 
             for lang in ["hun", "ger"]:
                 if lang in tokenized_datasets:
@@ -121,9 +112,7 @@ class NERDataLoader:
         Returns a dictionary of tokenized test sets.
         """
         try:
-            test_sets = {
-                "combined": tokenized_datasets["gold_only"]["test"]
-            }
+            test_sets = {"combined": tokenized_datasets["gold_only"]["test"]}
 
             for lang in ["hun", "ger"]:
                 if lang in tokenized_datasets:

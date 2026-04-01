@@ -2,9 +2,9 @@ import sys
 
 
 class NERException(Exception):
-    def __init__(self, error_message, error_details:sys):
+    def __init__(self, error_message, error_details: sys):
         self.error_message = error_message
-        _,_,traceback = error_details.exc_info()
+        _, _, traceback = error_details.exc_info()
 
         self.lineno = traceback.tb_lineno
         self.file_name = traceback.tb_frame.f_code.co_filename

@@ -10,39 +10,46 @@ from src.data_preprocessor import NERDataPreprocessor
 def mock_tokenizer():
     return MagicMock()
 
+
 @pytest.fixture
 def preprocessor(config, mock_tokenizer):
     with patch("src.data_preprocessor.AutoTokenizer.from_pretrained", return_value=mock_tokenizer):
         return NERDataPreprocessor(config)
 
+
 @pytest.fixture
 def raw_hun_ds():
     """Hungarian dataset already has 'ner_tags' (standard) according to config."""
-    features = Features({
-        "tokens": Sequence(Value("string")),
-        "ner_tags": Sequence(ClassLabel(names=["O", "B-PER", "I-PER"]))
-    })
-    ds = Dataset.from_dict({
-        "tokens": [["Petőfi", "Sándor"]],
-        "ner_tags": [[1, 2]]
-    }, features=features)
+    features = Features(
+        {
+            "tokens": Sequence(Value("string")),
+            "ner_tags": Sequence(ClassLabel(names=["O", "B-PER", "I-PER"])),
+        }
+    )
+    ds = Dataset.from_dict(
+        {"tokens": [["Petőfi", "Sándor"]], "ner_tags": [[1, 2]]}, features=features
+    )
     return DatasetDict({"train": ds, "validation": ds, "test": ds})
+
 
 @pytest.fixture
 def raw_ger_ds():
     """German dataset has 'ner_tags' but labels needs to be mapped."""
     # Let's say German has "PER", "ORG", "LOC", "MISC", "O"
     ger_labels = ["O", "PER", "ORG", "LOC", "MISC"]
-    features = Features({
-        "tokens": Sequence(Value("string")),
-        "ner_tags": Sequence(ClassLabel(names=ger_labels))
-    })
-    ds = Dataset.from_dict({
-        "tokens": [["Berlin", "ist", "groß"]],
-        "ner_tags": [[3, 0, 0]] # LOC, O, O
-    }, features=features)
+    features = Features(
+        {"tokens": Sequence(Value("string")), "ner_tags": Sequence(ClassLabel(names=ger_labels))}
+    )
+    ds = Dataset.from_dict(
+        {
+            "tokens": [["Berlin", "ist", "groß"]],
+            "ner_tags": [[3, 0, 0]],  # LOC, O, O
+        },
+        features=features,
+    )
     # Include 'test' to avoid KeyError in run_pipeline
     return DatasetDict({"train": ds, "dev": ds, "test": ds})
+
 
 def test_harmonize_hun(preprocessor, raw_hun_ds):
     """Test that Hungarian dataset is renamed and columns selected."""
@@ -56,11 +63,20 @@ def test_harmonize_hun(preprocessor, raw_hun_ds):
     assert set(result["train"].column_names) == {"tokens", "ner"}
     assert preprocessor.config.master_features is not None
 
+
 def test_harmonize_ger(preprocessor, raw_ger_ds):
     """Test mapping of German labels and renaming of 'dev' split."""
     # Mocking config.label2id for the test
     preprocessor.config.label_names = [
-        "O", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC", "B-MISC", "I-MISC"
+        "O",
+        "B-PER",
+        "I-PER",
+        "B-ORG",
+        "I-ORG",
+        "B-LOC",
+        "I-LOC",
+        "B-MISC",
+        "I-MISC",
     ]
 
     # B-LOC should be at index 5 in the master list
@@ -75,6 +91,7 @@ def test_harmonize_ger(preprocessor, raw_ger_ds):
     # Check value mapping (3 in GER maps to B-LOC / index 5 in Master)
     # Fallback to O because names don't match exactly in this simple mock
     assert result["train"][0]["ner"] == [0, 0, 0]
+
 
 @patch("src.data_preprocessor.load_dataset")
 @patch("src.data_preprocessor.load_from_disk")
@@ -94,6 +111,7 @@ def test_load_raw(mock_makedirs, mock_exists, mock_load_disk, mock_load_hf, prep
     assert mock_load_hf.call_count == 2
     assert mock_makedirs.call_count == 2
 
+
 def test_cast_master_dataset_schema(preprocessor, raw_hun_ds, raw_ger_ds):
     """Test schema casting logic."""
     # Prepare mock schemas
@@ -108,6 +126,7 @@ def test_cast_master_dataset_schema(preprocessor, raw_hun_ds, raw_ger_ds):
         assert res_hun == "cast_result"
         assert res_ger == "cast_result"
         assert mock_cast.call_count == 2
+
 
 @patch("src.data_preprocessor.interleave_datasets")
 @patch("src.data_preprocessor.concatenate_datasets")

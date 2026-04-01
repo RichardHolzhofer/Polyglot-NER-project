@@ -12,12 +12,14 @@ def test_predictor_initializes_with_hub_fallback(mock_hf_pipeline):
         expected_path = f"{config.hub_repo_id}/{config.output_model_name}"
         assert predictor.model_path == expected_path
 
+
 def test_predictor_initializes_with_local_model(mock_hf_pipeline):
     """Test predictor uses local model if config.json exists."""
     with patch("os.path.exists", return_value=True):
         config = NERConfig()
         predictor = NERPredictor(config)
         assert predictor.model_path == config.output_dir
+
 
 def test_predictor_single_string_and_postprocessing(mock_hf_pipeline):
     """

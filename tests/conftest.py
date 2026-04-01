@@ -19,9 +19,11 @@ def mock_env_vars():
     with patch.dict(os.environ, mock_env):
         yield
 
+
 @pytest.fixture
 def mock_hf_pipeline():
     """Mocks the transformers pipeline to prevent heavy model downloads during tests."""
+
     def _mock_nlp(inputs, **kwargs):
         print("Mock pipeline called with:", inputs)
         # We include punctuation in the fake entity to test post-processing
@@ -43,10 +45,12 @@ def mock_hf_pipeline():
     with patch("src.predictor.pipeline", return_value=_mock_nlp):
         yield _mock_nlp
 
+
 @pytest.fixture
 def config():
     """Provides a fresh NERConfig instance for each test."""
     return NERConfig()
+
 
 @pytest.fixture
 def client(mock_hf_pipeline):

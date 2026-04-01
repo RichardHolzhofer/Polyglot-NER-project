@@ -56,15 +56,13 @@ def main():
         processed_full_path = os.path.join(config.data_dir, config.processed_path)
         if not os.path.exists(processed_full_path):
             logging.info(
-                f"Processed dataset not found at {processed_full_path}. "
-                "Running preprocessing..."
+                f"Processed dataset not found at {processed_full_path}. Running preprocessing..."
             )
             preprocessor = NERDataPreprocessor(config)
             preprocessor.run_pipeline()
         else:
             logging.info(
-                f"Processed dataset found at {processed_full_path}. "
-                "Skipping preprocessing step."
+                f"Processed dataset found at {processed_full_path}. Skipping preprocessing step."
             )
 
         logging.info(f"Model ID: {config.model_id}")
@@ -93,6 +91,7 @@ def main():
     except Exception as e:
         logging.error(f"Untracked exception in main: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

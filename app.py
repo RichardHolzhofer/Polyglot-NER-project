@@ -41,9 +41,7 @@ async def lifespan(app: FastAPI):
         # Ensure W&B token for training path
         wandb_key = os.getenv("WANDB_API_KEY")
         if not wandb_key:
-            logging.warning(
-                "WANDB_API_KEY is not set. W&B will not track training runs."
-            )
+            logging.warning("WANDB_API_KEY is not set. W&B will not track training runs.")
 
         config = NERConfig()
 
@@ -71,7 +69,7 @@ class PredictionRequest(BaseModel):
     items: Union[str, List[str]] = Field(
         ...,
         description="A single text string or a list of strings to analyze.",
-        json_schema_extra={"example": "Kovács János az OTP Bank igazgatója."}
+        json_schema_extra={"example": "Kovács János az OTP Bank igazgatója."},
     )
 
 
@@ -89,13 +87,14 @@ class PredictionResponse(BaseModel):
 
 # Endpoints
 
+
 @app.get("/")
 async def root():
     """Root endpoint guiding users to the API documentation."""
     return {
         "message": "Welcome to the Polyglot NER API!",
         "docs": "Visit /docs for the interactive API documentation and testing interface.",
-        "health": "Visit /health to check API status."
+        "health": "Visit /health to check API status.",
     }
 
 
@@ -121,9 +120,8 @@ async def predict(request: PredictionRequest):
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         logging.error(f"Unexpected error during API prediction: {e}")
-        raise HTTPException(
-            status_code=500, detail="An internal server error occurred."
-        )
+        raise HTTPException(status_code=500, detail="An internal server error occurred.")
+
 
 if __name__ == "__main__":
     import uvicorn
