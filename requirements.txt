@@ -1,13 +1,8 @@
---extra-index-url https://download.pytorch.org/whl/cpu
-
-# Core UI & Logic
 streamlit>=1.38.0
 pandas>=2.0.0
 python-dotenv>=1.0.0
 requests>=2.31.0
 pydantic>=2.0.0
-
-# AI & NLP (CPU Optimized)
 torch==2.4.1+cpu
 transformers==5.4.0
 datasets>=2.16.0
