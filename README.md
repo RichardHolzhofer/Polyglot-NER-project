@@ -101,11 +101,11 @@ The project defaults to a **Hub-First** strategy—inference works out-of-the-bo
 Manual setup is only required if you want to use a local model mirror or inspect the datasets:
 1.  **Add DagsHub Remote**:
     ```bash
-    dvc remote add -d origin https://dagshub.com/RichardHolzhofer/Polyglot-NER-project.dvc
+    uv run dvc remote add -d origin https://dagshub.com/RichardHolzhofer/Polyglot-NER-project.dvc
     ```
 2.  **Pull Artifacts**:
     ```bash
-    dvc pull -r origin
+    uv run dvc pull -r origin final_model data
     ```
     *This will populate the `data/` and `final_model/` folders for local-override support.*
 

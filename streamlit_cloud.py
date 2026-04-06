@@ -24,6 +24,7 @@ def load_css(file_path):
 
 load_css("style.css")
 
+
 @st.cache_resource
 def get_predictor():
     """Initializes and caches the NER Predictor for single-process cloud deployment."""
@@ -57,7 +58,13 @@ with st.sidebar:
     )
     st.divider()
     st.markdown("### 🏷️ Supported Entities")
-    st.markdown("- **PER**: Persons\n- **ORG**: Organizations\n- **LOC**: Locations\n- **MISC**: Miscellaneous")
+    supported_entities = """
+- **PER**: Persons
+- **ORG**: Organizations
+- **LOC**: Locations
+- **MISC**: Miscellaneous
+"""
+    st.markdown(supported_entities)
 
 # MAIN INTERFACE
 st.subheader("Analyze Text")

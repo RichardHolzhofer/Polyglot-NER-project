@@ -10,3 +10,5 @@ wandb/
 /final_model
 /data_notebooks
 /model_checkpoints
+.devcontainer/
+
